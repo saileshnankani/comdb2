@@ -113,6 +113,8 @@ int main( int argc, char **argv)
 
       if(line[0] == '\n' || line[0] == '#')
          continue;
+      // TODO: If the line equals "bounce_connection", bounce the client connections 
+      // to the db.
       id = parse_line( line, &query);
       if (id<0)
       {
@@ -186,6 +188,8 @@ static int usage( char *prg)
 
 static int parse_line( char *line, char **query)
 {
+   // TODO: This expects a line to be of the form "<client id> <sql query>".
+   // Extend this function so that it also understands "bounce_connection".
    int   id = 0;
    char  *sp = line;
 

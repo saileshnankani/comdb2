@@ -7,10 +7,14 @@
 #include <unistd.h>
 #include <signal.h>
 #include <mem.h>
+#include <cdb2api.h>
 
+// #include "hatest.h"
 #include "stepper_client.h"
+#include <sys/socket.h>
 
 #define MAX_LINE 65536
+#define MAX_NODES 128
 
 static int debug = 0;
 
@@ -29,6 +33,36 @@ void timed_out(int sig, siginfo_t *info, void *uap)
     }
     exit(1);
 }
+
+struct dummy_cdb2buf {
+    int fd;
+     /* Don't care about the rest. */
+};
+
+/* Should match with cdb2api.c. */
+struct dummy_cdb2_hndl {
+     char dbname[64];
+     char cluster[64];
+     char type[64];
+     char hosts[MAX_NODES][64];
+     int  ports[MAX_NODES];
+     int  hosts_connected[MAX_NODES];
+     struct dummy_cdb2buf   *sb;
+     /* Don't care about the rest. */
+};
+
+void disconnect_cdb2h(cdb2_hndl_tp * cdb2h) {
+    struct dummy_cdb2_hndl *dummy_hndl;
+    dummy_hndl = (struct dummy_cdb2_hndl *)cdb2h;
+    if (dummy_hndl->sb)
+        shutdown(dummy_hndl->sb->fd, 2);
+}
+
+struct dummy_client
+{
+   int   id;
+   cdb2_hndl_tp *db;
+};
 
 int main( int argc, char **argv)
 {
@@ -141,6 +175,11 @@ int main( int argc, char **argv)
          continue;
       }
 
+      if (strcmp(query, "bounce_connection") == 0) {
+         struct dummy_client* dummy_client = (struct dummy_client*)clnt;
+         disconnect_cdb2h(dummy_client->db);
+         return 0;
+      }
 
       if (debug)
          fprintf( out, "%d [%s]\n", id, query);

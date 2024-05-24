@@ -100,7 +100,8 @@ endforeach()
 if(NOT COMDB2_SKIP_CDB2API_SO)
   add_library(api_hello_world_lib SHARED api_hello_world_lib.c)
   list(APPEND test-tools api_hello_world_lib)
-
+  target_link_libraries(api_hello_world_lib cdb2api ${common-deps})
+  
   add_exe(api_libs api_libs.c)
   target_link_libraries(api_libs cdb2api_shared ${common-deps})
 

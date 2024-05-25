@@ -14,6 +14,7 @@
 
 struct client;
 typedef struct client client_t;
+LISTC_T(client_t) clients;
 
 /**
  * Opens a client using "prgname" comdb2sql

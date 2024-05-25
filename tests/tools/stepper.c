@@ -7,10 +7,13 @@
 #include <unistd.h>
 #include <signal.h>
 #include <mem.h>
+#include <cdb2api.h>
+#include <list.h>
 
 #include "stepper_client.h"
 
 #define MAX_LINE 65536
+#define MAX_NODES 128
 
 static int debug = 0;
 
@@ -29,6 +32,38 @@ void timed_out(int sig, siginfo_t *info, void *uap)
     }
     exit(1);
 }
+
+struct dummy_cdb2buf {
+    int fd;
+     /* Don't care about the rest. */
+};
+
+struct dummy_cdb2_hndl {
+     char dbname[64];
+     char cluster[64];
+     char type[64];
+     char hosts[MAX_NODES][64];
+     int  ports[MAX_NODES];
+     int  hosts_connected[MAX_NODES];
+     struct dummy_cdb2buf   *sb;
+     /* Don't care about the rest. */
+};
+
+void disconnect_cdb2h(cdb2_hndl_tp * cdb2h) {
+    struct dummy_cdb2_hndl *dummy_hndl;
+    dummy_hndl = (struct dummy_cdb2_hndl *)cdb2h;
+   //  if (dummy_hndl->sb)
+   //      shutdown(dummy_hndl->sb->fd, 2);
+}
+
+/* storing clients (i.e. comm pipes) */
+struct client
+{
+   int   id;
+   cdb2_hndl_tp *db;
+
+   LINKC_T(struct client) lnk;
+};
 
 int main( int argc, char **argv)
 {
@@ -113,8 +148,16 @@ int main( int argc, char **argv)
 
       if(line[0] == '\n' || line[0] == '#')
          continue;
-      // TODO: If the line equals "bounce_connection", bounce the client connections 
-      // to the db.
+
+      if (strcmp(line, "bounce_connection\n") == 0) {
+         client_t *clnt;
+         LISTC_FOR_EACH( &clients, clnt, lnk)
+         {
+            disconnect_cdb2h(clnt->db);
+         }
+         continue;
+      }
+
       id = parse_line( line, &query);
       if (id<0)
       {

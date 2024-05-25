@@ -17,7 +17,6 @@ struct client
    LINKC_T(struct client) lnk;
 };
 
-LISTC_T(client_t) clients;
 
 /**
  * Opens a client 
